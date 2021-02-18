@@ -1,4 +1,4 @@
-# Задание по RxJava: список овощей
+# Задание по RxJava: список продуктов
 
 Есть список продуктов в формате JSON по адресу: https://raw.githubusercontent.com/poetofcode/RxProducts/master/products/products.json:
 
