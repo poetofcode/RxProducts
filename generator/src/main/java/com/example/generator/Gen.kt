@@ -17,7 +17,7 @@ fun main(args: Array<String>) {
 
     // Step 2: save total list of products in "products.json"
     val productList = products.shuffled().joinToString(", ") { product ->
-        product.toJsonAsListItem("https://github.com/.../")
+        product.toJsonAsListItem("https://raw.githubusercontent.com/poetofcode/RxProducts/master/products/")
     }
     saveTextFile("products.json", "[$productList]")
 
@@ -47,7 +47,7 @@ fun buildProducts(): List<Product> {
 }
 
 fun saveTextFile(name: String, contents: String) {
-    val myfile = File("products/" + name)
+    val myfile = File("products/$name")
     myfile.printWriter().use { out ->
         out.print(contents)
     }
@@ -72,7 +72,7 @@ fun Product.toJsonAsListItem(basePath: String) = StringBuffer().apply {
     append("{")
     append(kv("name", name))
     append(",")
-    append(kv("src", "${basePath}item_$fileName"))
+    append(kv("src", "${basePath}item_$fileName.json"))
     append("}")
 }.toString()
 
