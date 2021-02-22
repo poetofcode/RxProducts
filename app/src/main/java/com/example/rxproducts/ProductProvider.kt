@@ -34,6 +34,8 @@ class ProductProvider {
             .addCallAdapterFactory(RxJava3CallAdapterFactory.create())
             .build()
 
+        var resultInvoice = ""
+
         val productService = retrofit.create(ProductService::class.java)
         productService
             .getProductList()
@@ -61,7 +63,13 @@ class ProductProvider {
             }
             .blockingSubscribe(
                 { sortedProds ->
-                    Log.d(LOG_TAG, "Products: $sortedProds")
+                    // Log.d(LOG_TAG, "Products: $sortedProds")
+                    resultInvoice = sortedProds.mapIndexed { idx, prod ->
+                        if (prod !is Product) {
+                            return@mapIndexed ""
+                        }
+                        "#${idx + 1} ${prod.name}\n${prod.description}\n${prod.price.toInt()} руб"
+                    }.joinToString("\n\n")
                 },
                 { t ->
                     Log.e(LOG_TAG, "On error")
@@ -69,7 +77,7 @@ class ProductProvider {
                 }
             )
 
-        return ""
+        return resultInvoice
     }
 
 }
