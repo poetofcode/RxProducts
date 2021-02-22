@@ -53,16 +53,19 @@ class ProductProvider {
                 }
                 return@flatMap Observable.merge(obsList)
             }
+            .toSortedList { prodA, prodB ->
+                if (prodA !is Product || prodB !is Product) {
+                    return@toSortedList 0
+                }
+                return@toSortedList if (prodA.price > prodB.price) 1 else -1
+            }
             .blockingSubscribe(
-                { resp ->
-                    Log.d(LOG_TAG, "Product: $resp")
+                { sortedProds ->
+                    Log.d(LOG_TAG, "Products: $sortedProds")
                 },
                 { t ->
                     Log.e(LOG_TAG, "On error")
                     t.let { Log.e(LOG_TAG, t.message!!) }
-                },
-                {
-                    Log.w(LOG_TAG, "Complete")
                 }
             )
 
