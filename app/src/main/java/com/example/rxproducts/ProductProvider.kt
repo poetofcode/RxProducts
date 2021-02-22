@@ -8,6 +8,8 @@ import retrofit2.Retrofit
 import retrofit2.adapter.rxjava3.RxJava3CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
+import retrofit2.http.Path
+import java.io.IOException
 
 
 const val API_URL = "https://raw.githubusercontent.com/poetofcode/RxProducts/master/products/"
@@ -34,10 +36,19 @@ class ProductProvider {
         val productService = retrofit.create(ProductService::class.java)
         productService
             .getProductList()
-            // .subscribeOn(Schedulers.trampoline())
+            .flatMap { prods ->
+                if (prods == null) {
+                    return@flatMap Observable.just(Observable.error<Any>(IOException("Product list request failed")))
+                }
+                val obsList = prods.map {
+                    val parts = it.src.split("/")
+                    return@map productService.getProduct(parts.last())
+                }
+                return@flatMap Observable.merge(obsList)
+            }
             .blockingSubscribe(
                 { resp ->
-                    Log.d(LOG_TAG, "Product count: ${resp.size}")
+                    Log.d(LOG_TAG, "Product: $resp")
                 },
                 { t ->
                     Log.e(LOG_TAG, "On error")
@@ -59,9 +70,13 @@ class Product {
 
     var src: String = ""
 
-    var desription: String = ""
+    var description: String = ""
 
     var price: Double = .0
+
+    override fun toString(): String {
+        return "Product(name='$name', src='$src', description='$description', price=$price)"
+    }
 
 }
 
@@ -69,5 +84,8 @@ interface ProductService {
 
     @GET("products.json")
     fun getProductList(): Observable<List<Product>>
+
+    @GET("{path}")
+    fun getProduct(@Path("path") path: String): Observable<Product>
 
 }
