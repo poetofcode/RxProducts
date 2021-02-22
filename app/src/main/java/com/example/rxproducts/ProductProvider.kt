@@ -2,6 +2,7 @@ package com.example.rxproducts
 
 import android.util.Log
 import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.functions.BiFunction
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -42,7 +43,13 @@ class ProductProvider {
                 }
                 val obsList = prods.map {
                     val parts = it.src.split("/")
-                    return@map productService.getProduct(parts.last())
+                    Observable.zip(
+                        Observable.just(it),
+                        productService.getProduct(parts.last()),
+                        BiFunction { prodA: Product?, prodB: Product? ->
+                            Product.mergeTwo(prodA, prodB)
+                        }
+                    )
                 }
                 return@flatMap Observable.merge(obsList)
             }
@@ -78,6 +85,25 @@ class Product {
         return "Product(name='$name', src='$src', description='$description', price=$price)"
     }
 
+    companion object {
+        fun mergeTwo(prodA: Product?, prodB: Product?): Product {
+            if (prodA == null && prodB == null) {
+                return Product()
+            }
+            if (prodB == null) {
+                return prodA!!
+            }
+            if (prodA == null) {
+                return prodB
+            }
+            val res = Product()
+            res.name = prodA.name
+            res.src = prodA.src
+            res.price = prodB.price
+            res.description = prodB.description
+            return res
+        }
+    }
 }
 
 interface ProductService {
