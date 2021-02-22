@@ -2,7 +2,6 @@ package com.example.rxproducts
 
 import android.util.Log
 import io.reactivex.rxjava3.core.Observable
-import io.reactivex.rxjava3.schedulers.Schedulers
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -19,7 +18,7 @@ class ProductProvider {
     fun getProductInvoice(): String {
 
         val logging = HttpLoggingInterceptor()
-        logging.setLevel(HttpLoggingInterceptor.Level.BODY)
+        logging.setLevel(HttpLoggingInterceptor.Level.NONE)
 
         val client: OkHttpClient = OkHttpClient.Builder()
             .addNetworkInterceptor(logging)
@@ -33,16 +32,19 @@ class ProductProvider {
             .build()
 
         val productService = retrofit.create(ProductService::class.java)
-
         productService
             .getProductList()
-            .subscribeOn(Schedulers.trampoline())
-            .subscribe(
-                { prods ->
-                    Log.d(LOG_TAG, "Product size from request: ${prods.size}")
+            // .subscribeOn(Schedulers.trampoline())
+            .blockingSubscribe(
+                { resp ->
+                    Log.d(LOG_TAG, "Product count: ${resp.size}")
                 },
                 { t ->
+                    Log.e(LOG_TAG, "On error")
                     t.let { Log.e(LOG_TAG, t.message!!) }
+                },
+                {
+                    Log.w(LOG_TAG, "Complete")
                 }
             )
 
