@@ -1,7 +1,6 @@
 package com.example.rxproducts
 
 import io.reactivex.rxjava3.observers.TestObserver
-import io.reactivex.rxjava3.schedulers.Schedulers
 import junit.framework.Assert.assertEquals
 import org.junit.Test
 
