@@ -18,8 +18,9 @@ const val LOG_TAG = "ProductProvider"
 
 class ProductProvider {
 
-    fun getProductInvoice(): String {
+    private val productService: ProductService
 
+    init {
         val logging = HttpLoggingInterceptor()
         logging.setLevel(HttpLoggingInterceptor.Level.NONE)
 
@@ -34,10 +35,36 @@ class ProductProvider {
             .addCallAdapterFactory(RxJava3CallAdapterFactory.create())
             .build()
 
-        var resultInvoice = ""
 
-        val productService = retrofit.create(ProductService::class.java)
-        productService
+        productService = retrofit.create(ProductService::class.java)
+    }
+
+    fun getProductInvoice(): String {
+        var resultInvoice = ""
+            getProductsForInvoice()
+            .toList()
+            .blockingSubscribe(
+                { sortedProds ->
+                    // Log.d(LOG_TAG, "Products: $sortedProds")
+                    resultInvoice = sortedProds.mapIndexed { idx, prod ->
+                        if (prod !is Product) {
+                            return@mapIndexed ""
+                        }
+                        "#${idx + 1} ${prod.name}\n${prod.description}\n${prod.price.toInt()} руб"
+                    }.joinToString("\n\n")
+                },
+                { t ->
+                    Log.e(LOG_TAG, "On error")
+                    t.let { Log.e(LOG_TAG, t.message!!) }
+                }
+            )
+
+        return resultInvoice
+    }
+
+    fun getProductsForInvoice(): Observable<Product> {
+
+        return productService
             .getProductList()
             .flatMap { prods ->
                 if (prods == null) {
@@ -61,25 +88,13 @@ class ProductProvider {
                 }
                 return@toSortedList if (prodA.price > prodB.price) 1 else -1
             }
-            .blockingSubscribe(
-                { sortedProds ->
-                    // Log.d(LOG_TAG, "Products: $sortedProds")
-                    resultInvoice = sortedProds.mapIndexed { idx, prod ->
-                        if (prod !is Product) {
-                            return@mapIndexed ""
-                        }
-                        "#${idx + 1} ${prod.name}\n${prod.description}\n${prod.price.toInt()} руб"
-                    }.joinToString("\n\n")
-                },
-                { t ->
-                    Log.e(LOG_TAG, "On error")
-                    t.let { Log.e(LOG_TAG, t.message!!) }
-                }
-            )
-
-        return resultInvoice
+            .toObservable()
+            .flatMap { lst ->
+                return@flatMap Observable.fromIterable(lst.map {
+                    return@map it as Product
+                })
+            }
     }
-
 }
 
 class Product {
