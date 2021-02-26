@@ -63,7 +63,6 @@ class ProductProvider {
     }
 
     fun getProductsForInvoice(): Observable<Product> {
-
         return productService
             .getProductList()
             .flatMap { prods ->
@@ -109,6 +108,28 @@ class Product {
 
     override fun toString(): String {
         return "Product(name='$name', src='$src', description='$description', price=$price)"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Product
+
+        if (name != other.name) return false
+        if (src != other.src) return false
+        if (description != other.description) return false
+        if (price != other.price) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = name.hashCode()
+        result = 31 * result + src.hashCode()
+        result = 31 * result + description.hashCode()
+        result = 31 * result + price.hashCode()
+        return result
     }
 
     companion object {

@@ -1,18 +1,37 @@
 package com.example.rxproducts
 
+import io.reactivex.rxjava3.observers.TestObserver
+import io.reactivex.rxjava3.schedulers.Schedulers
 import junit.framework.Assert.assertEquals
 import org.junit.Test
 
 class ProductProviderTest {
 
     @Test
-    fun productList_isValid() {
+    fun `generated invoice is valid`() {
         val productProvider = ProductProvider()
         assertEquals(productProvider.getProductInvoice(), getActualInvoice())
     }
 
+    @Test
+    fun `observable of products is valid`() {
+        val testObserver: TestObserver<Product> = TestObserver()
+
+        val productProvider = ProductProvider()
+        productProvider.getProductsForInvoice()
+            .blockingSubscribe(testObserver)
+
+        testObserver.assertValueCount(11)
+        testObserver.assertValueAt(1, Product().apply {
+            name = "Бананы"
+            description = "Банан - вкусный и полезный фрукт"
+            price = 60.0
+            src = "https://raw.githubusercontent.com/poetofcode/RxProducts/master/products/item_banana.json"
+        })
+    }
+
     // Src: https://raw.githubusercontent.com/poetofcode/RxProducts/master/products/result.txt
-    fun getActualInvoice() = "#1 Картофель\n" +
+    private fun getActualInvoice() = "#1 Картофель\n" +
             "Жарь и вари, бери и жри\n" +
             "50 руб\n" +
             "\n" +
